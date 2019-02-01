@@ -38,6 +38,7 @@ class AnimatedSprite(pygame.sprite.Sprite):
         self.cur_frame = (self.cur_frame + 1) % len(self.frames)
         self.image = self.frames[self.cur_frame]
 
+
 pygame.init()
 size = width, height = 1000, 600
 screen = pygame.display.set_mode(size)
