@@ -94,7 +94,7 @@ clock = pygame.time.Clock()
 is_game_over = False
 is_first_level_end = False
 is_start = False
-is_win = True
+is_win = False
 
 motion = 'stop'
 
@@ -106,7 +106,6 @@ while running:
         borders = borders_first_level
 
     screen.fill((255, 255, 255))
-
     if (not is_game_over) and is_start and not is_win:
         borders.draw(screen)
         all_sprites.draw(screen)
@@ -142,9 +141,10 @@ while running:
                 is_start = False
             else:
                 is_first_level_end = True
-                sprite.rect.left = 5
-                sprite.rect.top = 10
-            break
+                sprite.rect.left = 80
+                sprite.rect.top = 80
+                cir.rect.top = 535
+                cir.rect.left = 80
 
         if motion == right:
             sprite.rect.x += 4
@@ -170,9 +170,17 @@ while running:
                     motion = stop
                     sprite.rect.left = 10
                     sprite.rect.top = 5
+                    cir.rect.left = 455
+                    cir.rect.top = 560
 
         game_over.draw(screen)
         restart.draw(screen)
+
+    elif is_win:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+        win.draw(screen)
 
     elif not is_start:
         for event in pygame.event.get():
@@ -184,14 +192,9 @@ while running:
                 collision = pygame.sprite.spritecollide(mouse_sprite, play, False)
                 if collision:
                     is_start = True
+
         play.draw(screen)
         screen.blit(logo, (100, 100))
-
-    elif is_win:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-        win.draw(screen)
 
     pygame.display.update()
     pygame.display.flip()
