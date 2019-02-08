@@ -10,7 +10,7 @@ up = 'up'
 down = 'down'
 
 
-def load_image(name, colorkey=None):
+def load_image(name, colorkey=None):  # обработка изображения
     fullname = os.path.join('data', name)
     try:
         image = pygame.image.load(fullname)
@@ -70,7 +70,7 @@ sprite.rect = sprite.image.get_rect()
 sprite.rect.left = 10
 sprite.rect.top = 5
 
-circle = pygame.sprite.Group()  # создание конца лабиринта
+circle = pygame.sprite.Group()  # создание перехода на следующий уровень лабиринта
 
 cir = pygame.sprite.Sprite(circle)
 c_image = load_image("circle.png")
@@ -96,17 +96,17 @@ is_first_level_end = False
 is_start = False
 is_win = False
 
-motion = 'stop'
+motion = 'stop'  # переменная, отвечающая за направление движения
 
 running = True
 while running:
-    if is_first_level_end:
+    if is_first_level_end:  # проверка, какой уровень должен быть сейчас
         borders = borders_second_level
     else:
         borders = borders_first_level
 
     screen.fill((255, 255, 255))
-    if (not is_game_over) and is_start and not is_win:
+    if (not is_game_over) and is_start and not is_win:  # цикл уровней
         borders.draw(screen)
         all_sprites.draw(screen)
 
@@ -117,7 +117,7 @@ while running:
             if event.type == pygame.QUIT:
                 running = False
 
-            if event.type == pygame.KEYDOWN:
+            if event.type == pygame.KEYDOWN:  # движение по стрелкам
                 if event.key == pygame.K_LEFT:
                     motion = left
                 elif event.key == pygame.K_RIGHT:
@@ -127,15 +127,15 @@ while running:
                 elif event.key == pygame.K_DOWN:
                     motion = down
 
-            elif event.type == pygame.KEYUP:
+            elif event.type == pygame.KEYUP:  # остановка движения
                 if event.key in [pygame.K_LEFT, pygame.K_RIGHT, pygame.K_DOWN, pygame.K_UP]:
                     motion = stop
 
-        if pygame.sprite.spritecollideany(sprite, borders):
+        if pygame.sprite.spritecollideany(sprite, borders):  # проверка на столкновение со стенами
             game_over.draw(screen)
             is_game_over = True
 
-        if pygame.sprite.spritecollideany(sprite, circle):
+        if pygame.sprite.spritecollideany(sprite, circle):  # проверка на столкновение с переходом
             if is_first_level_end:
                 is_win = True
                 is_start = False
@@ -146,7 +146,7 @@ while running:
                 cir.rect.top = 535
                 cir.rect.left = 80
 
-        if motion == right:
+        if motion == right:  # движение спрайта
             sprite.rect.x += 4
         elif motion == left:
             sprite.rect.x -= 4
@@ -155,7 +155,7 @@ while running:
         elif motion == down:
             sprite.rect.y += 4
 
-    elif is_game_over:
+    elif is_game_over:  # отрисовка проигрыша
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
@@ -176,13 +176,13 @@ while running:
         game_over.draw(screen)
         restart.draw(screen)
 
-    elif is_win:
+    elif is_win:  # отрисовка победы
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
         win.draw(screen)
 
-    elif not is_start:
+    elif not is_start:  # отрисовка начальной страницы
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
@@ -196,6 +196,5 @@ while running:
         play.draw(screen)
         screen.blit(logo, (100, 100))
 
-    pygame.display.update()
     pygame.display.flip()
     clock.tick(15)

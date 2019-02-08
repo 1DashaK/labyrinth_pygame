@@ -1,7 +1,7 @@
 import pygame
 
 
-class Border(pygame.sprite.Sprite):
+class Border(pygame.sprite.Sprite):  # класс стен
     # строго вертикальный или строго горизонтальный отрезок
     def __init__(self, x1, y1, x2, y2):
         super().__init__(borders_second_level)
@@ -14,7 +14,7 @@ pygame.init()
 size = width, height = 525, 675
 screen = pygame.display.set_mode(size)
 
-borders_second_level = pygame.sprite.Group()
+borders_second_level = pygame.sprite.Group()  # группа стен второго уровня
 
 k = 75
 
@@ -45,7 +45,7 @@ Border(6 * k, k, 6 * k + 2, 4 * k)  # шестой столбец
 Border(6 * k, 6 * k, 6 * k + 2, 9 * k)
 
 
-Border(0, 0, width, 5)
+Border(0, 0, width, 5)  # создание стен экрана
 Border(0, height - 5, width, height)
 Border(0, 0, 5, height)
 Border(width - 5, 0, width, height)
