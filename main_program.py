@@ -1,13 +1,24 @@
 import pygame
 import os
-from maps.first_level import borders_first_level
-from maps.second_level import borders_second_level
 
 stop = 'stop'
 right = 'right'
 left = 'left'
 up = 'up'
 down = 'down'
+cell_size = 75
+
+
+class Border(pygame.sprite.Sprite):  # класс стен
+    # строго вертикальный или строго горизонтальный отрезок
+    def __init__(self, x1, y1, x2, y2):
+        super().__init__(borders)
+        self.image = pygame.Surface([abs(x2 - x1), abs(y2 - y1)])
+        self.rect = pygame.Rect(x1, y1, abs(x2 - x1), abs(y2 - y1))
+        if x1 == x2 - 2:  # вертикальная стена
+            self.add(vertical_borders)
+        else:  # горизонтальная стенка
+            self.add(horizontal_borders)
 
 
 def load_image(name, colorkey=None):  # обработка изображения
@@ -28,6 +39,10 @@ def load_image(name, colorkey=None):  # обработка изображени�
 pygame.init()
 size = width, height = 525, 675
 screen = pygame.display.set_mode(size)
+
+borders = pygame.sprite.Group()
+horizontal_borders = pygame.sprite.Group()
+vertical_borders = pygame.sprite.Group()
 
 logo = load_image('Labyrinth.png')
 
@@ -67,8 +82,6 @@ ball_image = load_image("air_balloon.png")
 ball_image = pygame.transform.scale(ball_image, (60, 60))
 sprite.image = ball_image
 sprite.rect = sprite.image.get_rect()
-sprite.rect.left = 10
-sprite.rect.top = 5
 
 circle = pygame.sprite.Group()  # создание перехода на следующий уровень лабиринта
 
@@ -76,8 +89,6 @@ cir = pygame.sprite.Sprite(circle)
 c_image = load_image("circle.png")
 cir.image = c_image
 cir.rect = sprite.image.get_rect()
-cir.rect.left = 455
-cir.rect.top = 560
 
 win = pygame.sprite.Group()  # создание конца лабиринта
 
@@ -92,22 +103,40 @@ w.rect.top = 100
 clock = pygame.time.Clock()
 
 is_game_over = False
-is_first_level_end = False
 is_start = False
 is_win = False
+levels = [f for f in os.listdir('maps')]
+levels.sort()
+levels = levels[:-2]
 
 motion = 'stop'  # переменная, отвечающая за направление движения
 
+last_level = 0
+f = open('maps/{}'.format(levels[last_level]))
+rect = list(map(int, f.readline().strip().split()))
+
+sprite.rect.left = rect[0]
+sprite.rect.top = rect[1]
+
+rect = list(map(int, f.readline().strip().split()))
+
+cir.rect.left = rect[0]
+cir.rect.top = rect[1]
+
+level = f.readlines()
+f.close()
+for i in range(0, height, cell_size):
+    for j in range(0, width, cell_size):
+        if level[i // cell_size][j // cell_size] == '1':
+            Border(j, i, j + 2, i + cell_size)
+        if level[i // cell_size + 9][j // cell_size] == '1':
+            Border(j, i, j + cell_size, i + 2)
 running = True
 while running:
-    if is_first_level_end:  # проверка, какой уровень должен быть сейчас
-        borders = borders_second_level
-    else:
-        borders = borders_first_level
-
     screen.fill((255, 255, 255))
     if (not is_game_over) and is_start and not is_win:  # цикл уровней
-        borders.draw(screen)
+        vertical_borders.draw(screen)
+        horizontal_borders.draw(screen)
         all_sprites.draw(screen)
 
         circle.draw(screen)
@@ -136,15 +165,31 @@ while running:
             is_game_over = True
 
         if pygame.sprite.spritecollideany(sprite, circle):  # проверка на столкновение с переходом
-            if is_first_level_end:
+            if last_level == len(levels) - 1:
                 is_win = True
                 is_start = False
             else:
-                is_first_level_end = True
-                sprite.rect.left = 80
-                sprite.rect.top = 80
-                cir.rect.top = 535
-                cir.rect.left = 80
+                borders = pygame.sprite.Group()
+                horizontal_borders = pygame.sprite.Group()
+                vertical_borders = pygame.sprite.Group()
+                last_level += 1
+                f = open('maps/{}'.format(levels[last_level]))
+
+                rect = list(map(int, f.readline().strip().split()))
+                sprite.rect.left = rect[0]
+                sprite.rect.top = rect[1]
+
+                rect = list(map(int, f.readline().strip().split()))
+                cir.rect.left = rect[0]
+                cir.rect.top = rect[1]
+                level = f.readlines()
+                f.close()
+                for i in range(0, height, cell_size):
+                    for j in range(0, width, cell_size):
+                        if level[i // cell_size][j // cell_size] == '1':
+                            Border(j, i, j + 2, i + cell_size)
+                        if level[i // cell_size + 9][j // cell_size] == '1':
+                            Border(j, i, j + cell_size, i + 2)
 
         if motion == right:  # движение спрайта
             sprite.rect.x += 4
