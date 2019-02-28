@@ -105,27 +105,28 @@ clock = pygame.time.Clock()
 is_game_over = False
 is_start = False
 is_win = False
-levels = [f for f in os.listdir('maps')]
-levels.sort()
-levels = levels[:-2]
 
 motion = 'stop'  # переменная, отвечающая за направление движения
 
-last_level = 0
+levels = [f for f in os.listdir('maps')]  # скачивание уровней
+levels.sort()
+levels = levels[:-2]
+
+last_level = 0  # выбор последнего уровня
 f = open('maps/{}'.format(levels[last_level]))
-rect = list(map(int, f.readline().strip().split()))
+rect = list(map(int, f.readline().strip().split()))  # установка спрайта в его начальную точку
 
 sprite.rect.left = rect[0]
 sprite.rect.top = rect[1]
 
-rect = list(map(int, f.readline().strip().split()))
+rect = list(map(int, f.readline().strip().split()))  # установка перехода в его начальную точку
 
 cir.rect.left = rect[0]
 cir.rect.top = rect[1]
 
-level = f.readlines()
+level = f.readlines()  # считывание из файла расположение стен
 f.close()
-for i in range(0, height, cell_size):
+for i in range(0, height, cell_size):  # создание стен
     for j in range(0, width, cell_size):
         if level[i // cell_size][j // cell_size] == '1':
             Border(j, i, j + 2, i + cell_size)
@@ -135,11 +136,12 @@ running = True
 while running:
     screen.fill((255, 255, 255))
     if (not is_game_over) and is_start and not is_win:  # цикл уровней
-        vertical_borders.draw(screen)
-        horizontal_borders.draw(screen)
-        all_sprites.draw(screen)
+        vertical_borders.draw(screen)  # отрисовка стен
+        horizontal_borders.draw(screen)  # отрисовка стен
 
-        circle.draw(screen)
+        all_sprites.draw(screen)  # отрисовка спрайта
+
+        circle.draw(screen)  # отрисовка перехода
 
         for event in pygame.event.get():
 
@@ -165,26 +167,27 @@ while running:
             is_game_over = True
 
         if pygame.sprite.spritecollideany(sprite, circle):  # проверка на столкновение с переходом
-            if last_level == len(levels) - 1:
+            if last_level == len(levels) - 1:  # проверка, последний ли это уровень
                 is_win = True
                 is_start = False
             else:
-                borders = pygame.sprite.Group()
+                borders = pygame.sprite.Group()  # создание группы стен нового уровня
                 horizontal_borders = pygame.sprite.Group()
                 vertical_borders = pygame.sprite.Group()
-                last_level += 1
+                last_level += 1  #
                 f = open('maps/{}'.format(levels[last_level]))
 
-                rect = list(map(int, f.readline().strip().split()))
+                rect = list(map(int, f.readline().strip().split()))  # установка спрайта в его начальную точку
                 sprite.rect.left = rect[0]
                 sprite.rect.top = rect[1]
 
-                rect = list(map(int, f.readline().strip().split()))
+                rect = list(map(int, f.readline().strip().split()))  # установка перехода в его начальную точку
                 cir.rect.left = rect[0]
                 cir.rect.top = rect[1]
-                level = f.readlines()
+
+                level = f.readlines()  # считывание из файла расположение стен
                 f.close()
-                for i in range(0, height, cell_size):
+                for i in range(0, height, cell_size):  # создание стен
                     for j in range(0, width, cell_size):
                         if level[i // cell_size][j // cell_size] == '1':
                             Border(j, i, j + 2, i + cell_size)
