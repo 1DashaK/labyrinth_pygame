@@ -110,7 +110,7 @@ motion = 'stop'  # переменная, отвечающая за направ�
 
 levels = [f for f in os.listdir('maps')]  # скачивание уровней
 levels.sort()
-levels = levels[:-2]
+levels = levels[:-1]
 
 last_level = 0  # выбор последнего уровня
 f = open('maps/{}'.format(levels[last_level]))
