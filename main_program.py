@@ -214,12 +214,26 @@ while running:
                 if collision:
                     is_start = True
                     is_game_over = False
-                    is_first_level_end = False
+                    last_level = 0
                     motion = stop
-                    sprite.rect.left = 10
-                    sprite.rect.top = 5
-                    cir.rect.left = 455
-                    cir.rect.top = 560
+                    f = open('maps/{}'.format(levels[last_level]))
+
+                    rect = list(map(int, f.readline().strip().split()))  # установка спрайта в его начальную точку
+                    sprite.rect.left = rect[0]
+                    sprite.rect.top = rect[1]
+
+                    rect = list(map(int, f.readline().strip().split()))  # установка перехода в его начальную точку
+                    cir.rect.left = rect[0]
+                    cir.rect.top = rect[1]
+
+                    level = f.readlines()  # считывание из файла расположение стен
+                    f.close()
+                    for i in range(0, height, cell_size):  # создание стен
+                        for j in range(0, width, cell_size):
+                            if level[i // cell_size][j // cell_size] == '1':
+                                Border(j, i, j + 2, i + cell_size)
+                            if level[i // cell_size + 9][j // cell_size] == '1':
+                                Border(j, i, j + cell_size, i + 2)
 
         game_over.draw(screen)
         restart.draw(screen)
