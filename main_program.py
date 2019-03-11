@@ -1,5 +1,6 @@
 import pygame
 import os
+from requests import get
 
 stop = 'stop'
 right = 'right'
@@ -7,6 +8,14 @@ left = 'left'
 up = 'up'
 down = 'down'
 cell_size = 75
+
+
+class Level(pygame.sprite.Sprite):
+    def __init__(self, num, x, y):
+        super().__init__(all_levels)
+        self.num = num
+        self.image = pygame.Surface([90, 90])
+        self.rect = pygame.Rect(x, y, 90, 90)
 
 
 class Border(pygame.sprite.Sprite):  # класс стен
@@ -34,6 +43,14 @@ def load_image(name, colorkey=None):  # обработка изображени�
             colorkey = image.get_at((0, 0))
         image.set_colorkey(colorkey)
     return image
+
+
+num = get('http://localhost:8080/len_db')
+num = int(num.text)
+
+levels = []
+for i in range(num):
+    levels.append(get('http://localhost:8080/{}'.format(i + 1)).text)
 
 
 pygame.init()
@@ -100,38 +117,37 @@ w.rect = sprite.image.get_rect()
 w.rect.left = 100
 w.rect.top = 100
 
+menu = pygame.sprite.Group()  # создание кнопки заново
+
+m = pygame.sprite.Sprite(menu)
+m_image = load_image("menu.png")
+m_image = pygame.transform.scale(m_image, (100, 100))
+m.image = m_image
+m.rect = rest.image.get_rect()
+m.rect.left = 50
+m.rect.top = 500
+
+all_levels = pygame.sprite.Group()
+for i in range(len(levels) // 5):
+    for j in range(5):
+        level = Level(i * 5 + j, j * 100, i * 100)
+        all_levels.add(level)
+for i in range(num % 5):
+    j = num - num % 5
+    level = Level(j + i, i * 100, j * 100)
+    all_levels.add(level)
+
+last_level = 0
+
 clock = pygame.time.Clock()
 
 is_game_over = False
 is_start = False
 is_win = False
+is_change_level = False
 
 motion = 'stop'  # переменная, отвечающая за направление движения
 
-levels = [f for f in os.listdir('maps')]  # скачивание уровней
-levels.sort()
-levels = levels[:-1]
-
-last_level = 0  # выбор последнего уровня
-f = open('maps/{}'.format(levels[last_level]))
-rect = list(map(int, f.readline().strip().split()))  # установка спрайта в его начальную точку
-
-sprite.rect.left = rect[0]
-sprite.rect.top = rect[1]
-
-rect = list(map(int, f.readline().strip().split()))  # установка перехода в его начальную точку
-
-cir.rect.left = rect[0]
-cir.rect.top = rect[1]
-
-level = f.readlines()  # считывание из файла расположение стен
-f.close()
-for i in range(0, height, cell_size):  # создание стен
-    for j in range(0, width, cell_size):
-        if level[i // cell_size][j // cell_size] == '1':
-            Border(j, i, j + 2, i + cell_size)
-        if level[i // cell_size + 9][j // cell_size] == '1':
-            Border(j, i, j + cell_size, i + 2)
 running = True
 while running:
     screen.fill((255, 255, 255))
@@ -163,36 +179,12 @@ while running:
                     motion = stop
 
         if pygame.sprite.spritecollideany(sprite, borders):  # проверка на столкновение со стенами
-            game_over.draw(screen)
             is_game_over = True
+            motion = stop
 
         if pygame.sprite.spritecollideany(sprite, circle):  # проверка на столкновение с переходом
-            if last_level == len(levels) - 1:  # проверка, последний ли это уровень
-                is_win = True
-                is_start = False
-            else:
-                borders = pygame.sprite.Group()  # создание группы стен нового уровня
-                horizontal_borders = pygame.sprite.Group()
-                vertical_borders = pygame.sprite.Group()
-                last_level += 1  #
-                f = open('maps/{}'.format(levels[last_level]))
-
-                rect = list(map(int, f.readline().strip().split()))  # установка спрайта в его начальную точку
-                sprite.rect.left = rect[0]
-                sprite.rect.top = rect[1]
-
-                rect = list(map(int, f.readline().strip().split()))  # установка перехода в его начальную точку
-                cir.rect.left = rect[0]
-                cir.rect.top = rect[1]
-
-                level = f.readlines()  # считывание из файла расположение стен
-                f.close()
-                for i in range(0, height, cell_size):  # создание стен
-                    for j in range(0, width, cell_size):
-                        if level[i // cell_size][j // cell_size] == '1':
-                            Border(j, i, j + 2, i + cell_size)
-                        if level[i // cell_size + 9][j // cell_size] == '1':
-                            Border(j, i, j + cell_size, i + 2)
+            is_win = True
+            motion = stop
 
         if motion == right:  # движение спрайта
             sprite.rect.x += 4
@@ -203,6 +195,71 @@ while running:
         elif motion == down:
             sprite.rect.y += 4
 
+    elif is_change_level:
+
+        for event in pygame.event.get():
+
+            if event.type == pygame.QUIT:
+                running = False
+
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                is_col = True
+            else:
+                is_col = False
+
+        all_levels.draw(screen)
+
+        for i in range(num // 5):
+            for j in range(5):
+                font = pygame.font.SysFont('arial', 50)
+                image = font.render(str(i * 5 + j + 1), 1, (0, 0, 0))
+                text_x = j * 100 + 30
+                text_y = i * 100 + 30
+                text_w = image.get_width()
+                text_h = image.get_height()
+                screen.blit(image, (text_x, text_y))
+
+        for i in range(num % 5):
+            j = num - num % 5
+            font = pygame.font.SysFont('arial', 50)
+            image = font.render(str(i + j + 1), 1, (255, 255, 255))
+            text_x = i * 90 + 30
+            text_y = j * 90 + 30
+            text_w = image.get_width()
+            text_h = image.get_height()
+            screen.blit(image, (text_x, text_y))
+
+        mouse_sprite = pygame.sprite.Sprite()
+        mouse_sprite.rect = pygame.Rect(*pygame.mouse.get_pos(), 1, 1)
+        collision = pygame.sprite.spritecollide(mouse_sprite, all_levels, False)
+
+        if collision and is_col:
+
+            borders = pygame.sprite.Group()  # создание группы стен нового уровня
+            horizontal_borders = pygame.sprite.Group()
+            vertical_borders = pygame.sprite.Group()
+
+            last_level = collision[0].num  #
+
+            lev = levels[last_level]
+            lev = lev.split()
+
+            sprite.rect.left = int(lev[0])  # установка спрайта в его начальную точку
+            sprite.rect.top = int(lev[1])
+
+            cir.rect.left = int(lev[2])  # установка перехода в его начальную точку
+            cir.rect.top = int(lev[3])
+
+            level = lev[4:]  # считывание из файла расположение стен
+            for i in range(0, height, cell_size):  # создание стен
+                for j in range(0, width, cell_size):
+                    if level[i // cell_size][j // cell_size] == '1':
+                        Border(j, i, j + 2, i + cell_size)
+                    if level[i // cell_size + 9][j // cell_size] == '1':
+                        Border(j, i, j + cell_size, i + 2)
+            is_change_level = False
+            is_start = True
+
     elif is_game_over:  # отрисовка проигрыша
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -212,29 +269,9 @@ while running:
                 mouse_sprite.rect = pygame.Rect(*pygame.mouse.get_pos(), 1, 1)
                 collision = pygame.sprite.spritecollide(mouse_sprite, restart, False)
                 if collision:
-                    is_start = True
+                    is_start = False
                     is_game_over = False
-                    last_level = 0
-                    motion = stop
-                    f = open('maps/{}'.format(levels[last_level]))
-
-                    rect = list(map(int, f.readline().strip().split()))  # установка спрайта в его начальную точку
-                    sprite.rect.left = rect[0]
-                    sprite.rect.top = rect[1]
-
-                    rect = list(map(int, f.readline().strip().split()))  # установка перехода в его начальную точку
-                    cir.rect.left = rect[0]
-                    cir.rect.top = rect[1]
-
-                    level = f.readlines()  # считывание из файла расположение стен
-                    f.close()
-                    for i in range(0, height, cell_size):  # создание стен
-                        for j in range(0, width, cell_size):
-                            if level[i // cell_size][j // cell_size] == '1':
-                                Border(j, i, j + 2, i + cell_size)
-                            if level[i // cell_size + 9][j // cell_size] == '1':
-                                Border(j, i, j + cell_size, i + 2)
-
+                    is_change_level = True
         game_over.draw(screen)
         restart.draw(screen)
 
@@ -242,7 +279,15 @@ while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+            if event.type == pygame.MOUSEBUTTONUP:
+                mouse_sprite = pygame.sprite.Sprite()
+                mouse_sprite.rect = pygame.Rect(*pygame.mouse.get_pos(), 1, 1)
+                collision = pygame.sprite.spritecollide(mouse_sprite, menu, False)
+                if collision:
+                    is_change_level = True
+                    is_win = False
         win.draw(screen)
+        menu.draw(screen)
 
     elif not is_start:  # отрисовка начальной страницы
         for event in pygame.event.get():
@@ -253,7 +298,7 @@ while running:
                 mouse_sprite.rect = pygame.Rect(*pygame.mouse.get_pos(), 1, 1)
                 collision = pygame.sprite.spritecollide(mouse_sprite, play, False)
                 if collision:
-                    is_start = True
+                    is_change_level = True
 
         play.draw(screen)
         screen.blit(logo, (100, 100))

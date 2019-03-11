@@ -1,6 +1,9 @@
 import pygame
 
 number = int(input())
+ball_coord = map(int, input().split())
+circle_coord = map(int, input().split())
+
 width = 525
 height = 675
 cell_size = 75
@@ -33,6 +36,8 @@ while run:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             f = open('maps/{}_level.txt'.format(number), 'w')
+            f.write(*ball_coord)
+            f.write(*circle_coord)
             for i in range(0, height, cell_size):
                 f.write(''.join([str(j) for j in vert_borders[i // cell_size]]))
                 f.write('\n')
